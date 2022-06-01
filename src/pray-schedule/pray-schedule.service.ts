@@ -10,7 +10,8 @@ import {
 } from 'nestjs-telegraf';
 import { Context, Telegraf } from 'telegraf';
 import { Coordinates, PrayerTimes, CalculationMethod } from 'adhan';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
+import { find } from 'geo-tz';
 
 @Update()
 export class PrayScheduleService {
@@ -38,17 +39,25 @@ export class PrayScheduleService {
     const coords = new Coordinates(msg.latitude, msg.longitude);
     const params = CalculationMethod.MoonsightingCommittee();
     const prayerTimes = new PrayerTimes(coords, now, params);
+    const timeZone = find(msg.latitude, msg.longitude);
 
     await ctx.reply(
-      `<b>Berikut Jadwal Shalat Hari ini di lokasi kamu</b>\n<i><b>Subuh:</b></i> ${moment(
-        prayerTimes.fajr,
-      ).format('HH:mm')}\n<i><b>Dzuhur:</b></i> ${moment(
-        prayerTimes.dhuhr,
-      ).format('HH:mm')}\n<i><b>Ashar:</b></i> ${moment(prayerTimes.asr).format(
-        'HH:mm',
-      )}\n<i><b>Maghrib:</b></i> ${moment(prayerTimes.maghrib).format(
-        'HH:mm',
-      )}\n<i><b>Isya:</b></i> ${moment(prayerTimes.isha).format('HH:mm')}
+      `<b>Berikut Jadwal Shalat Hari ini di lokasi kamu</b>\n<i><b>Subuh:</b></i> ${moment
+        .utc(prayerTimes.fajr)
+        .tz(timeZone[0])
+        .format('HH:mm')}\n<i><b>Dzuhur:</b></i> ${moment
+        .utc(prayerTimes.dhuhr)
+        .tz(timeZone[0])
+        .format('HH:mm')}\n<i><b>Ashar:</b></i> ${moment
+        .utc(prayerTimes.asr)
+        .tz(timeZone[0])
+        .format('HH:mm')}\n<i><b>Maghrib:</b></i> ${moment
+        .utc(prayerTimes.maghrib)
+        .tz(timeZone[0])
+        .format('HH:mm')}\n<i><b>Isya:</b></i> ${moment
+        .utc(prayerTimes.isha)
+        .tz(timeZone[0])
+        .format('HH:mm')}
     `,
       {
         parse_mode: 'HTML',
